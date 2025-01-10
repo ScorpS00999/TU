@@ -35,12 +35,14 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
             _baseDefense = baseDefense;
             _baseSpeed = baseSpeed;
             _baseType = baseType;
+
+            CurrentHealth = MaxHealth;
         }
         /// <summary>
         /// HP actuel du personnage
         /// </summary>
         public int CurrentHealth { get; private set; }
-        public TYPE BaseType { get => _baseType;}
+        public TYPE BaseType { get => _baseType; }
         /// <summary>
         /// HPMax, prendre en compte base et equipement potentiel
         /// </summary>
@@ -48,7 +50,14 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
         {
             get
             {
-                throw new NotImplementedException();
+                if (CurrentEquipment != null)
+                {
+                    return _baseHealth + CurrentEquipment.BonusHealth;
+                }
+                else
+                {
+                    return _baseHealth;
+                }
             }
         }
         /// <summary>
@@ -58,7 +67,14 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
         {
             get
             {
-                throw new NotImplementedException();
+                if (CurrentEquipment != null)
+                {
+                    return _baseAttack + CurrentEquipment.BonusAttack;
+                }
+                else
+                {
+                    return _baseAttack;
+                }
             }
         }
         /// <summary>
@@ -68,7 +84,14 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
         {
             get
             {
-                throw new NotImplementedException();
+                if (CurrentEquipment != null)
+                {
+                    return _baseDefense + CurrentEquipment.BonusDefense;
+                }
+                else
+                {
+                    return _baseDefense;
+                }
             }
         }
         /// <summary>
@@ -78,19 +101,30 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
         {
             get
             {
-                throw new NotImplementedException();
+                if (CurrentEquipment != null)
+                {
+                    return _baseSpeed + CurrentEquipment.BonusSpeed;
+                }
+                else
+                {
+                    return _baseSpeed;
+                }
             }
         }
         /// <summary>
         /// Equipement unique du personnage
         /// </summary>
         public Equipment CurrentEquipment { get; private set; }
+
+        public Shield CurrentShield { get; private set; }
         /// <summary>
         /// null si pas de status
         /// </summary>
         public StatusEffect CurrentStatus { get; private set; }
 
-        public bool IsAlive => throw new NotImplementedException();
+        public bool IsAlive => CurrentHealth > 0;
+
+        //public bool IsFristToAttack => false;
 
 
         /// <summary>
@@ -102,7 +136,44 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
         /// <exception cref="NotImplementedException"></exception>
         public void ReceiveAttack(Skill s)
         {
-            throw new NotImplementedException();
+            if (CurrentShield != null)
+            {
+                CurrentShield.ReceiveAttack(s.Power);
+                if (!CurrentShield.IsNotBroken)
+                {
+                    UnequipShield();
+                }
+
+            }
+            else
+            {
+                CurrentHealth -= (s.Power - Defense);
+                if (CurrentHealth < 0)
+                {
+                    CurrentHealth = 0;
+                }
+            }
+
+        }
+
+        public void ReceiveAttack(Skill s, float multi)
+        {
+            if (CurrentShield != null)
+            {
+                CurrentShield.ReceiveAttack((int)((float)s.Power * multi));
+                if (!CurrentShield.IsNotBroken)
+                {
+                    UnequipShield();
+                }
+            }
+            else
+            {
+                CurrentHealth -= (int)(((float)s.Power * multi) - Defense);
+                if (CurrentHealth < 0)
+                {
+                    CurrentHealth = 0;
+                }
+            }
         }
         /// <summary>
         /// Equipe un objet au personnage
@@ -111,15 +182,87 @@ namespace _2023_GC_A2_Partiel_POO.Level_2
         /// <exception cref="ArgumentNullException">Si equipement est null</exception>
         public void Equip(Equipment newEquipment)
         {
-            throw new NotImplementedException();
+            if (newEquipment == null)
+            {
+                throw new ArgumentNullException();
+            }
+            else
+            {
+                CurrentEquipment = newEquipment;
+            }
+        }
+
+
+        public void EquipShield(Shield shield)
+        {
+            if (shield == null)
+            {
+                throw new ArgumentNullException();
+            }
+            else
+            {
+                CurrentShield = shield;
+            }
+        }
+
+        public void UnequipShield()
+        {
+            CurrentShield = null;
         }
         /// <summary>
         /// Desequipe l'objet en cours au personnage
         /// </summary>
         public void Unequip()
         {
-            throw new NotImplementedException();
+            CurrentEquipment = null;
         }
 
+        public void ReceiveHeal(PotionHeal potion)
+        {
+            ReceiveHealPotion(potion.Heal);
+        }
+
+        public void ReceiveMalusHealth(PotionMalus potion)
+        {
+            _baseHealth -= potion.MalusHealth;
+            if (CurrentHealth > MaxHealth)
+            {
+                CurrentHealth = MaxHealth;
+            }
+        }
+
+        public void ReceivePotion(PotionBonus potion)
+        {
+            if (potion.TypePotion == TYPEPOTION.HEALTH)
+            {
+                ReceiveHealPotion(potion.Power);
+            }
+            else if (potion.TypePotion == TYPEPOTION.ATTACK)
+            {
+                _baseAttack += potion.Power;
+            }
+            else if (potion.TypePotion == TYPEPOTION.DEFENSE)
+            {
+                _baseDefense += potion.Power;
+            }
+            else if (potion.TypePotion == TYPEPOTION.SPEED)
+            {
+                _baseSpeed += potion.Power;
+            }
+        }
+
+        public void ReceiveHealPotion(int heal)
+        {
+            if (IsAlive)
+            {
+                CurrentHealth += heal;
+
+                if (CurrentHealth > MaxHealth)
+                {
+                    CurrentHealth = MaxHealth;
+                }
+            }
+        }
     }
+
 }
